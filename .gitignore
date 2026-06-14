@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+
+# Django
+db.sqlite3
+/media
+/staticfiles
+*.log
+static/
+
+# Env / Secrets
+.env
+.env.*
+*.secret
+*.token
+
+# VSCode / Editor
+.vscode/
+.idea/
+*.swp
+
+# Virtual Envs
+venv/
+env/
+ENV/
+
+# Migrations 
+**/migrations/*.pyc
+**/migrations/__pycache__/
+
