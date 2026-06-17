@@ -10,6 +10,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import get_user_model
 from django.utils.encoding import force_bytes
+from .mail import send_activation_email
 
 User = get_user_model()
 
@@ -35,6 +36,11 @@ class RegistrationView(APIView):
             token = default_token_generator.make_token(user)
 
             activation_link = (f"http://localhost:8000/api/activate/"f"{uidb64}/{token}/")
+
+            send_activation_email(
+                user=user,
+                activation_link=activation_link
+            )
 
             return Response({
                 "user": {
@@ -155,7 +161,7 @@ class ActivateAccountView(APIView):
             user.save()
 
             return Response(
-                {"detail": "Account activated successfully"},
+                {"detail": "Account successfully activated."},
                 status=status.HTTP_200_OK
             )
 

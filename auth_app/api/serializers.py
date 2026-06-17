@@ -4,6 +4,8 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from auth_app.api.utils import generate_username
+
 class RegistrationSerializer(serializers.ModelSerializer):
     """
     Handles:
@@ -40,9 +42,12 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('confirmed_password')
 
+        email = validated_data['email']
+        username = generate_username(email)
+
         user = User(
-            username=validated_data['email'],
-            email=validated_data['email'],
+            username=username,
+            email=email,
             is_active=False
         )
 

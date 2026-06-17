@@ -1,4 +1,12 @@
-<h2>Willkommen bei Videoflix!</h2>
+<!DOCTYPE html>
+<html>
+<body>
+<div style="text-align:center;margin-bottom:30px;">
+    <img
+        src="http://localhost:8000/static/images/Logo.svg"
+        alt="Videoflix"
+        width="180">
+</div>
 
 <p>Dear {{ username }},</p>
 
@@ -7,7 +15,15 @@
 </p>
 
 <p>
-    <a href="{{ activation_link }}">
+    <a href="{{ activation_link }}"
+        style="
+        display:inline-block;
+        padding:8px 16px;
+        background:#042593;
+        color:white;
+        text-decoration:none;
+        border-radius:25px;
+    ">
         Activate account
     </a>
 </p>
@@ -23,3 +39,5 @@
 <p>
     Your Videoflix Team.
 </p>
+</body>
+</html>
