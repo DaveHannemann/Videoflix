@@ -6,7 +6,7 @@ User = get_user_model()
 
 COOKIE_SETTINGS = {
     "httponly": True,
-    "secure": True,
+    "secure": False,  # Set to True in production with HTTPS
     "samesite": "Lax",
 }
 
