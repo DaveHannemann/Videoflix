@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.password_validation import validate_password
 
 from auth_app.api.utils import generate_username
 
@@ -96,3 +97,23 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }
+    
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True)
+    confirmed_password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+
+        if attrs["new_password"] != attrs["confirmed_password"]:
+            raise serializers.ValidationError(
+                "Passwords do not match"
+            )
+
+        validate_password(attrs["new_password"])
+
+        return attrs

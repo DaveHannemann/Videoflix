@@ -5,14 +5,14 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from auth_app.api.authentication import CookieJWTAuthentication
-from .serializers import CustomTokenObtainPairSerializer, RegistrationSerializer
+from .serializers import CustomTokenObtainPairSerializer, PasswordResetSerializer, RegistrationSerializer, PasswordResetConfirmSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .utils import set_access_cookie, set_refresh_cookie, delete_auth_cookies
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth import get_user_model
 from django.utils.encoding import force_bytes
-from .mail import send_activation_email
+from .mail import send_activation_email, send_password_reset_email
 
 User = get_user_model()
 
@@ -35,13 +35,15 @@ class RegistrationView(APIView):
                 
             uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
 
-            token = default_token_generator.make_token(user)
+            activation_token = default_token_generator.make_token(user)
 
-            activation_link = (f"http://localhost:8000/api/activate/"f"{uidb64}/{token}/")
+            activation_link = (f"http://localhost:8000/api/activate/"f"{uidb64}/{activation_token}/")
 
             send_activation_email(
                 user=user,
-                activation_link=activation_link
+                activation_link=activation_link,
+                token=activation_token,
+                uidb64=uidb64
             )
 
             return Response({
@@ -49,6 +51,8 @@ class RegistrationView(APIView):
                     "id": user.id,
                     "email": user.email
                 },
+                "uidb64": uidb64,
+                "activation_token": activation_token,
                 "activation_link": activation_link
             }, status=status.HTTP_201_CREATED)
 
@@ -174,3 +178,55 @@ class ActivateAccountView(APIView):
             {"detail": "Invalid or expired token"},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+class PasswordResetView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = PasswordResetSerializer(
+        data=request.data
+    )
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'detail': 'An email has been sent to reset your password.'}, status=status.HTTP_200_OK)
+
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        reset_link = f"http://localhost:8000/api/password_confirm/{uidb64}/{token}/"
+
+        send_password_reset_email(
+            user=user,
+            reset_link=reset_link
+        )
+
+        return Response({'detail': 'An email has been sent to reset your password.'}, status=status.HTTP_200_OK)
+    
+class PasswordResetConfirmView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request, uidb64, token):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        new_password = serializer.validated_data["new_password"]
+
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError):
+            return Response({'detail': 'Invalid password reset link'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if default_token_generator.check_token(user, token):
+            user.set_password(new_password)
+            user.save()
+            return Response({'detail': 'Password has been reset successfully'}, status=status.HTTP_200_OK)
+
+        return Response({'detail': 'Invalid or expired token'}, status=status.HTTP_400_BAD_REQUEST)
