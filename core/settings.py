@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'django_rq',
     'auth_app',
+    'videos.apps.VideosConfig',
 ]
 
 MIDDLEWARE = [
@@ -160,7 +161,7 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "static"
 
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
