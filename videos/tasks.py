@@ -1,5 +1,6 @@
 import subprocess
 import os
+from django.conf import settings
 
 from videos.models import Video
 
@@ -111,15 +112,17 @@ def process_video(video_id):
     convert_480p(video.video_file.path)
     convert_720p(video.video_file.path)
     convert_1080p(video.video_file.path)
-    create_hls(video.video_file.path, "480p")
-    create_hls(video.video_file.path, "720p")
-    create_hls(video.video_file.path, "1080p")
+    create_hls(video.video_file.path, video.id, "480p")
+    create_hls(video.video_file.path, video.id, "720p")
+    create_hls(video.video_file.path, video.id, "1080p")
 
 
-def create_hls(source, resolution):
-    output_dir = source.replace(
-        ".mp4",
-        f"/{resolution}"
+def create_hls(source, video_id, resolution):
+    output_dir = os.path.join(
+        settings.MEDIA_ROOT,
+        "hls",
+        str(video_id),
+        resolution,
     )
 
     os.makedirs(output_dir, exist_ok=True)
@@ -129,6 +132,8 @@ def create_hls(source, resolution):
         "720p": "1280:720",
         "1080p": "1920:1080",
     }
+    if resolution not in resolutions:
+        raise ValueError(f"Unknown resolution: {resolution}")
 
     subprocess.run(
         [
@@ -140,8 +145,10 @@ def create_hls(source, resolution):
             "-hls_time", "10",
             "-hls_playlist_type", "vod",
             "-hls_segment_filename",
-            os.path.join(output_dir, "%03d.ts"),
+            os.path.join(output_dir, "segment_%03d.ts"),
             os.path.join(output_dir, "index.m3u8"),
         ],
         check=True,
+        capture_output=True,
+        text=True,
     )
