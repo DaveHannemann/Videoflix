@@ -13,6 +13,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
         - Password confirmation validation
         - Unique email validation
         - Secure user creation with hashed password
+        - Newly created accounts are inactive until activated
     """
     
     confirmed_password = serializers.CharField(write_only=True)
@@ -65,9 +66,10 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
     Custom JWT serializer for user authentication.
 
     Overrides default validation to:
-        - Manually verify email and password
-        - Provide consistent error messages
-        - Return standard JWT token pair (access + refresh)
+        - Authenticate users via email instead of username
+        - Verify account activation
+        - Provide consistent authentication error messages
+        - Return a JWT access and refresh token pair
     """
 
     email = serializers.EmailField(write_only=True)
@@ -100,10 +102,23 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
     
 
 class PasswordResetSerializer(serializers.Serializer):
+    """
+    Validates the email address used for requesting
+    a password reset.
+    """
+
     email = serializers.EmailField()
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    Validates the new password during the password reset process.
+
+    Ensures that:
+        - Both password fields match
+        - The password satisfies Django's password validators
+    """
+        
     new_password = serializers.CharField(write_only=True)
     confirmed_password = serializers.CharField(write_only=True)
 

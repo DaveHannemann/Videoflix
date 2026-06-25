@@ -21,7 +21,10 @@ class RegistrationView(APIView):
     Handles user registration.
 
     Accepts user data (e.g email, password),
-    validates it via RegistrationSerializer, and creates a new user.
+    validates it via RegistrationSerializer.
+
+    Creates a new inactive user account and sends an
+    email containing an activation link.
     """
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -102,7 +105,10 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 
 class LogoutView(APIView):
     """
-    Logs out the authenticated user by removing JWT cookies.
+    Logs out the authenticated user.
+
+    Invalidates the refresh token by adding it to the blacklist
+    and removes both JWT authentication cookies from the client.
     """
 
     permission_classes = [IsAuthenticated]
@@ -127,6 +133,10 @@ class CookieTokenRefreshView(TokenRefreshView):
     Overrides the default TokenRefreshView to:
         - Read refresh token from HTTP-only cookie
         - Generate a new access token and update cookie
+
+    Cookies:
+        - refresh_token (read)
+        - access_token (updated)
     """
     authentication_classes = []
     permission_classes = [AllowAny]
@@ -151,6 +161,18 @@ class CookieTokenRefreshView(TokenRefreshView):
         return response
     
 class ActivateAccountView(APIView):
+    """
+    Activates a newly registered user account.
+
+    Validates the UID and activation token received via the
+    activation link sent by email. If both are valid, the user
+    account is activated by setting `is_active=True`.
+
+    URL Parameters:
+        - uidb64: Base64 encoded user ID
+        - token: Django activation token
+    """
+
     authentication_classes = []
     permission_classes = [AllowAny]
 
@@ -180,6 +202,16 @@ class ActivateAccountView(APIView):
         )
 
 class PasswordResetView(APIView):
+    """
+    Sends a password reset email.
+
+    Accepts an email address and, if a matching user exists,
+    generates a password reset token and sends a reset link.
+
+    For security reasons, the same success response is returned
+    regardless of whether the email address exists.
+    """
+
     authentication_classes = []
     permission_classes = [AllowAny]
 
@@ -209,6 +241,17 @@ class PasswordResetView(APIView):
         return Response({'detail': 'An email has been sent to reset your password.'}, status=status.HTTP_200_OK)
     
 class PasswordResetConfirmView(APIView):
+    """
+    Resets a user's password.
+
+    Validates the password reset token and updates the user's
+    password if the provided token is valid.
+
+    URL Parameters:
+        - uidb64: Base64 encoded user ID
+        - token: Django password reset token
+    """
+
     authentication_classes = []
     permission_classes = [AllowAny]
 
