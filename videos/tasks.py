@@ -4,67 +4,14 @@ from django.conf import settings
 
 from videos.models import Video
 
-def convert_480p(source):
-    new_file_name = source.replace(".mp4", "_480p.mp4")
-
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-i", source,
-            "-s", "hd480",
-            "-c:v", "libx264",
-            "-crf", "23",
-            "-c:a", "aac",
-            new_file_name,
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-
-    return new_file_name
-
-def convert_720p(source):
-    new_file_name = source.replace(".mp4", "_720p.mp4")
-
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-i", source,
-            "-s", "hd720",
-            "-c:v", "libx264",
-            "-crf", "23",
-            "-c:a", "aac",
-            new_file_name,
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-
-    return new_file_name
-
-def convert_1080p(source):
-    new_file_name = source.replace(".mp4", "_1080p.mp4")
-
-    subprocess.run(
-        [
-            "ffmpeg",
-            "-i", source,
-            "-s", "hd1080",
-            "-c:v", "libx264",
-            "-crf", "23",
-            "-c:a", "aac",
-            new_file_name,
-        ],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-
-    return new_file_name
-
 def generate_thumbnail(source):
+    """
+    Generates a thumbnail image from the uploaded video.
+
+    Extracts a single frame five seconds into the video
+    and stores it as a JPEG image.
+    """
+    
     filename = os.path.basename(source).replace(
         ".mp4",
         "_thumbnail.jpg"
@@ -96,28 +43,15 @@ def generate_thumbnail(source):
 
     return f"thumbnails/{filename}"
 
-def process_video(video_id):
-    try:
-        video = Video.objects.get(id=video_id)
-    except Video.DoesNotExist:
-        return
-
-    thumbnail = generate_thumbnail(
-        video.video_file.path
-    )
-
-    video.thumbnail = thumbnail
-    video.save(update_fields=["thumbnail"])
-
-    convert_480p(video.video_file.path)
-    convert_720p(video.video_file.path)
-    convert_1080p(video.video_file.path)
-    create_hls(video.video_file.path, video.id, "480p")
-    create_hls(video.video_file.path, video.id, "720p")
-    create_hls(video.video_file.path, video.id, "1080p")
-
 
 def create_hls(source, video_id, resolution):
+    """
+    Converts a video into an HLS stream.
+
+    Generates an HLS playlist and MPEG-TS segments
+    for the specified resolution.
+    """
+
     output_dir = os.path.join(
         settings.MEDIA_ROOT,
         "hls",
@@ -152,3 +86,28 @@ def create_hls(source, video_id, resolution):
         capture_output=True,
         text=True,
     )
+
+
+def process_video(video_id):
+    """
+    Processes an uploaded video.
+
+    Generates a thumbnail image and creates HLS streams
+    in multiple resolutions for adaptive video streaming.
+    """
+
+    try:
+        video = Video.objects.get(id=video_id)
+    except Video.DoesNotExist:
+        return
+
+    thumbnail = generate_thumbnail(
+        video.video_file.path
+    )
+
+    video.thumbnail = thumbnail
+    video.save(update_fields=["thumbnail"])
+
+    create_hls(video.video_file.path, video.id, "480p")
+    create_hls(video.video_file.path, video.id, "720p")
+    create_hls(video.video_file.path, video.id, "1080p")
