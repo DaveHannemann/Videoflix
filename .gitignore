@@ -20,6 +20,7 @@ static/
 .env.*
 *.secret
 *.token
+!.env.template
 
 # VSCode / Editor
 .vscode/

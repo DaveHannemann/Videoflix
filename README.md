@@ -182,61 +182,28 @@ cd Videoflix
 ```
 
 
-Create a `.env` file in the project root:
-
-```
-Example:
-
-SECRET_KEY=
-
-DB_NAME=
-DB_USER=
-DB_PASSWORD=
-DB_HOST=
-DB_PORT=
-
-EMAIL_HOST=
-EMAIL_PORT=
-EMAIL_HOST_USER=
-EMAIL_HOST_PASSWORD=
-EMAIL_USE_TLS=True
-```
-
-Build the Docker containers.
-
-```
-docker compose build
-```
-
-Start the application
+Create a local environment file.
 
 ```bash
-docker compose up
+cp .env.template .env
 ```
 
-Run in detached mode
+(Windows users can simply copy `.env.template` and rename it to `.env`.)
+
+Edit the `.env` file and replace the placeholder values with your own configuration.
+
+Start the application.
 
 ```bash
-docker compose up -d
+docker compose up --build
 ```
 
-The Docker environment starts:
-* Django
-* PostgreSQL
-* Redis
-* Django RQ Worker
+On the first startup Docker automatically:
 
-Run database migrations.
-
-```
-docker compose exec backend python manage.py migrate
-```
-
-Create an administrator account.
-
-```
-docker compose exec backend python manage.py createsuperuser
-```
+- creates the database schema
+- creates the administrator account
+- starts the Redis worker
+- starts the Django application
 
 The backend is now available.
 
