@@ -42,7 +42,6 @@ class VideoListView(ListAPIView):
     Permissions:
         - Authenticated users only
     """
-
     permission_classes = [IsAuthenticated]
 
     queryset = Video.objects.all()
@@ -62,7 +61,6 @@ class PlaylistView(APIView):
     Permissions:
         - Authenticated users only
     """
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request, movie_id, resolution):
@@ -100,7 +98,6 @@ class SegmentView(APIView):
     Permissions:
         - Authenticated users only
     """
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request, movie_id, resolution, segment):
