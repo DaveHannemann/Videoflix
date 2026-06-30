@@ -30,38 +30,39 @@ class RegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """
+        Validates the registration data, creates an inactive user,
+        and sends an activation email.
+        """
         serializer = RegistrationSerializer(data=request.data)
 
 
-        if serializer.is_valid():
-            user = serializer.save()
-                
-            uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
-
-            activation_token = default_token_generator.make_token(user)
-
-            activation_link = (f"http://127.0.0.1:5500/pages/auth/activate.html?uid={uidb64}&token={activation_token}")
-
-            send_activation_email(
-                user=user,
-                activation_link=activation_link,
-                token=activation_token,
-                uidb64=uidb64
-            )
-
-            return Response({
-                "user": {
-                    "id": user.id,
-                    "email": user.email
-                },
-                "uidb64": uidb64,
-                "activation_token": activation_token,
-                "activation_link": activation_link
-            }, status=status.HTTP_201_CREATED)
-
-            # return Response({'detail': 'User created successfully!'}, status=status.HTTP_201_CREATED)
-        else:
+        if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = serializer.save()
+            
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+
+        activation_token = default_token_generator.make_token(user)
+
+        activation_link = (f"http://127.0.0.1:5500/pages/auth/activate.html?uid={uidb64}&token={activation_token}")
+
+        send_activation_email(
+            user=user,
+            activation_link=activation_link,
+            token=activation_token,
+            uidb64=uidb64
+        )
+
+        return Response({
+            "user": {
+                "id": user.id,
+                "email": user.email
+            },
+            "uidb64": uidb64,
+            "activation_token": activation_token,
+            "activation_link": activation_link
+        }, status=status.HTTP_201_CREATED)
         
     
 class CookieTokenObtainPairView(TokenObtainPairView):
@@ -81,9 +82,11 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
+        """
+        Authenticates the user and returns JWT cookies on success.
+        """
         serializer = self.get_serializer(data=request.data)
         
-        data = {}
         if serializer.is_valid():
             data = {
                 'id': serializer.user.id,
@@ -114,6 +117,9 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """
+        Blacklists the refresh token and removes authentication cookies.
+        """
 
         refresh_token = request.COOKIES.get("refresh_token")
         if refresh_token:
@@ -142,6 +148,9 @@ class CookieTokenRefreshView(TokenRefreshView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
+        """
+        Creates a new access token from the refresh token cookie.
+        """
         refresh_token = request.COOKIES.get("refresh_token")
 
         if refresh_token is None:
@@ -177,6 +186,9 @@ class ActivateAccountView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
+        """
+        Validates the activation token and activates the user account.
+        """
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
@@ -216,6 +228,10 @@ class PasswordResetView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """
+        Generates a password reset token and sends a reset email
+        if the user exists.
+        """
         serializer = PasswordResetSerializer(
         data=request.data
     )
@@ -256,6 +272,9 @@ class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, uidb64, token):
+        """
+        Validates the reset token and updates the user's password.
+        """
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

@@ -26,6 +26,9 @@ class VideoUploadView(APIView):
     permission_classes = [IsAdminUser]
     
     def post(self, request, *args, **kwargs):
+        """
+        Validates the uploaded video data and creates a new video entry.
+        """
         serializer = VideoSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -64,6 +67,9 @@ class PlaylistView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, movie_id, resolution):
+        """
+        Returns the requested HLS playlist for the specified video.
+        """
 
         video = get_object_or_404(Video, pk=movie_id)
 
@@ -101,6 +107,9 @@ class SegmentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, movie_id, resolution, segment):
+        """
+        Returns the requested HLS video segment.
+        """
 
         video = get_object_or_404(Video, pk=movie_id)
 

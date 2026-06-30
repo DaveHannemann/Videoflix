@@ -6,8 +6,11 @@ Provides helpers for:
     - Password reset emails
 """
 
+from email.mime.image import MIMEImage
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+from pathlib import Path
 
 def send_activation_email(user, activation_link, token, uidb64):
     """
@@ -46,6 +49,15 @@ def send_activation_email(user, activation_link, token, uidb64):
         "text/html"
     )
 
+    logo_path = Path(settings.BASE_DIR) / "assets" / "images" / "LogoVideoFlix.png"
+
+    with open(logo_path, "rb") as f:
+        logo = MIMEImage(f.read())
+        logo.add_header("Content-ID", "<videoflix-logo>")
+        logo.add_header("Content-Disposition", "inline", filename="LogoVideoFlix.png")
+
+    email.attach(logo)
+
     email.send()
 
 def send_password_reset_email(user, reset_link):
@@ -81,5 +93,14 @@ def send_password_reset_email(user, reset_link):
         html_content,
         "text/html"
     )
+
+    logo_path = Path(settings.BASE_DIR) / "assets" / "images" / "LogoVideoFlix.png"
+
+    with open(logo_path, "rb") as f:
+        logo = MIMEImage(f.read())
+        logo.add_header("Content-ID", "<videoflix-logo>")
+        logo.add_header("Content-Disposition", "inline", filename="LogoVideoFlix.png")
+
+    email.attach(logo)
 
     email.send()
