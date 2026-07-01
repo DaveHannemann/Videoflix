@@ -36,11 +36,10 @@ class RegistrationView(APIView):
         """
         serializer = RegistrationSerializer(data=request.data)
 
-
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         user = serializer.save()
-            
+
         uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
 
         activation_token = default_token_generator.make_token(user)
@@ -54,15 +53,12 @@ class RegistrationView(APIView):
             uidb64=uidb64
         )
 
-        return Response({
-            "user": {
-                "id": user.id,
-                "email": user.email
+        return Response(
+            {
+                "message": "Registration successful. Please check your email to activate your account."
             },
-            "uidb64": uidb64,
-            "activation_token": activation_token,
-            "activation_link": activation_link
-        }, status=status.HTTP_201_CREATED)
+            status=status.HTTP_201_CREATED
+        )
         
     
 class CookieTokenObtainPairView(TokenObtainPairView):
